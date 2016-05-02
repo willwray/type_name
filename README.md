@@ -1,7 +1,7 @@
 # type_name
 A C++ `type_name<T>()` templated utility function for pretty-printing demangled type names.
 
-Inspired by Howard Hinnant's type_name code, listed [below](1), originally posted in reponse to<br>
+Inspired by [Howard Hinnant's type_name code](#HH), originally posted in reponse to<br>
 stackoverflow.com question [How can I see the type deduced for a template type parameter?](http://stackoverflow.com/a/18369732), August 2013.<br>
 
 The implementation is based on C++ typeinfo, demangling the result as needed on GCC & Clang using the [Itanium ABI](http://mentorembedded.github.io/cxx-abi/) `__cxa_demangle()` function.
@@ -68,7 +68,7 @@ The `base()` member function cannot be made constexpr in general.
 The C++ [`typeid()`](http://en.cppreference.com/w/cpp/language/typeid) operator is declared in the `<typeinfo>` header. 
 It returns an implementation-defined name of the base type (the argument type with any const/volatile or reference qualifiers discarded). The result is returned as a c-string in some static buffer. GCC and Clang return 'mangled' names that require a further call to a 'demangle' ABI function.
 
-###[1] Howard Hinnant's type_name code
+<h3 id="HH">Howard Hinnant's type_name code</h2>
 Slightly edited from the [Beast](https://github.com/vinniefalco/Beast) project repo [type_name.h](https://github.com/vinniefalco/Beast/blob/54f6f0ceba6e928930a306a6b062cf6b820f0ec3/beast/type_name.h)
 ```C++
 //------------------------------------------------------------------------------ 
