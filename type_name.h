@@ -1,9 +1,5 @@
 #pragma once
 
-#include <tuple>
-#include <type_traits>
-#include <typeinfo>
-
 #include "compile_time_strings.h"
 
 //===========================================================
