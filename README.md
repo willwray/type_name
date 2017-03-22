@@ -1,4 +1,5 @@
 # type_name
+
 A C++ `type_name<T>()` templated utility function for pretty-printing demangled type names.
 
 Inspired by [Howard Hinnant's type_name code](#HH), originally posted in reponse to<br>
@@ -6,16 +7,20 @@ stackoverflow.com question [How can I see the type deduced for a template type p
 
 The implementation is based on C++ typeinfo, demangling the result as needed on GCC & Clang using the [Itanium ABI](http://mentorembedded.github.io/cxx-abi/) `__cxa_demangle()` function.
 
-###Usage example
+### Usage example
+
 Because the type is supplied as a template parameter, `decltype(expr)` is required to query the type of an expression:
+
 ```C++
     const volatile char abc[1][2][3]{};
     std::cout << type_name<decltype(abc)>();
 ```
+
 ...produces output:
 `char[1][2][3] const volatile`
 
-###Disclaimer
+### Disclaimer
+
 This code experiments with techniques to optimise away unnecessary string operations. The application of these techniques to `type_name()` is illustrative. It is not recommended to use this code; use the simple, original type_name().
 
 The aim is to improve run-time efficiency while keeping generated code small, going to constexpr extremes.
@@ -32,7 +37,7 @@ Code tested on gcc 6.1 (c++14 default) and Clang 3.8.0 `clang -std=c++14`.<br>
 (Not working on any MSVC - do not be fooled by the `_MSC_VER` conditional compile directives.)<br>
 (C++14 variable template specialisations are used that fail on gcc5.)
 
-##Design notes
+## Design notes
 Firstly, note that the type argument has to be provided as a template parameter; type deduction from a regular function argument is not sufficient because deduction cannot distinguish all possible passed types. In other words, it is not possible to wrap `decltype()` or implement it otherwise.
 
 In principal, with the type known at compile time, a fully constexpr implementation of  `type_name<T>` should be possible, for example as a constexpr variable template whose value is some compile-time string type containing the human-readable type name.
@@ -52,6 +57,7 @@ struct type_name
 Class construction is a no-op, allowing a kind of lazy evaluation.
  
 The string-returning function should be avoided where possible. Stream output, for example, could be done by constructing the string and using standard string output but is much more efficiently done via the following overload:
+
 ```C++
 template <typename T>
 std::ostream& operator<<(std::ostream& os, type_name<T>)
@@ -68,34 +74,11 @@ The `base()` member function cannot be made constexpr in general.
 The C++ [`typeid()`](http://en.cppreference.com/w/cpp/language/typeid) operator is declared in the `<typeinfo>` header. 
 It returns an implementation-defined name of the base type (the argument type with any const/volatile or reference qualifiers discarded). The result is returned as a c-string in some static buffer. GCC and Clang return 'mangled' names that require a further call to a 'demangle' ABI function.
 
-<h3 id="HH">Howard Hinnant's type_name code</h2>
-Slightly edited from the [Beast](https://github.com/vinniefalco/Beast) project repo [type_name.h](https://github.com/vinniefalco/Beast/blob/54f6f0ceba6e928930a306a6b062cf6b820f0ec3/beast/type_name.h)
+<h3 id="HH">Howard Hinnant's type_name code</h3>
+
+Slightly edited from vinniefalco's Beast repo `/beast/type_name.h`
+
 ```C++
-//------------------------------------------------------------------------------ 
-2 /* 
-3     This file is part of Beast: https://github.com/vinniefalco/Beast 
-4     Copyright 2014, Howard Hinnant <howard.hinnant@gmail.com> 
-5  
-6     Permission to use, copy, modify, and/or distribute this software for any 
-7     purpose  with  or without fee is hereby granted, provided that the above 
-8     copyright notice and this permission notice appear in all copies. 
-9  
-10     THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES 
-11     WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF 
-12     MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR 
-13     ANY  SPECIAL ,  DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES 
-14     WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN 
-15     ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF 
-16     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
-17 */ 
-18 //============================================================================== 
-
-#ifndef _MSC_VER
-#   include <cxxabi.h>
-#   include <memory>
-#   include <cstdlib>
-#endif
-
 template <typename T>
 std::string
 type_name()
@@ -121,3 +104,4 @@ type_name()
         r += "&&";
     return r;
 }
+```
