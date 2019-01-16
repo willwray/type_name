@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 #include "compile_time_strings.h"
 
 //===========================================================
@@ -80,12 +80,37 @@ template <> struct Tname<char> { static const char* const& cstr() { static const
 template <typename T> struct Tname<T[]> { static const char* const& cstr() { return Tname<std::remove_extent_t<T>>::cstr();} };
 template <typename T, size_t N> struct Tname<T[N]> { static const char* const& cstr() { return Tname<std::remove_extent_t<T>>::cstr();} };
 
+template <typename T> constexpr auto ref_qual = chararray("");
+template <typename T> constexpr auto ref_qual<T&> = chararray("&");
+template <typename T> constexpr auto ref_qual<T&&> = chararray("&&");
+
+template <typename T> constexpr auto cv_qual = chararray("");
+template <typename T> constexpr auto cv_qual<T const> = chararray(" const");
+template <typename T> constexpr auto cv_qual<T volatile> = chararray(" volatile");
+template <typename T> constexpr auto cv_qual<T const volatile> = chararray(" const volatile");
+
+template <typename T> constexpr auto array_cv_qual = cv_qual<T>;
+template <typename T> constexpr auto array_cv_qual<T[]> = chararray("[]") + array_cv_qual<T>;
+template <typename T, size_t N> constexpr auto array_cv_qual<T[N]> = chararray("[") + i2A<N>.value() + chararray("]") + array_cv_qual<T>;
+
 template <typename T>
 struct type_name
 {
-    static const char* const& base(); // base type name without qualifiers
-    static constexpr auto qual();     // qualifiers; cv, array and reference
-    static std::string str();         // str() returns base+qual concatenation.
+	// base type name without qualifiers
+    static const char* const& base() {
+		return Tname<std::remove_cv_t<std::remove_reference_t<T>>>::cstr();
+	}
+	// qualifiers; cv, array and reference
+    static constexpr auto qual() {
+		return array_cv_qual<std::remove_reference_t<T>> + ref_qual<T>;
+	}
+	// str() returns base+qual concatenation.
+	static std::string str();
+	/*{
+		constexpr auto qualzt = qual() + zeroterm;
+		constexpr bool q{ size(qualzt) != 1 };
+		return q ? std::string{ base() } +qualzt.begin() : std::string{ base() };
+	}*/
 };
 
 //  stream output type_name base() and qual() separately to avoid cost of uneccessary concantenation.
@@ -98,49 +123,36 @@ std::ostream& operator<<(std::ostream& os, type_name<T>)
 }
 
 // Class templates & partial specializations for type qualifiers; cv, array and reference
-template <typename T> struct ref_qual      { static constexpr auto chars = chararray(""); };
-template <typename T> struct ref_qual<T&>  { static constexpr auto chars = chararray("&"); };
-template <typename T> struct ref_qual<T&&> { static constexpr auto chars = chararray("&&"); };
+//template <typename T> struct ref_qual      { static constexpr auto chars = chararray(""); };
+//template <typename T> struct ref_qual<T&>  { static constexpr auto chars = chararray("&"); };
+//template <typename T> struct ref_qual<T&&> { static constexpr auto chars = chararray("&&"); };
+//
+//template <typename T> struct cv_qual                   { static constexpr auto chars = chararray(""); };
+//template <typename T> struct cv_qual<T const>          { static constexpr auto chars = chararray(" const"); };
+//template <typename T> struct cv_qual<T volatile>       { static constexpr auto chars = chararray(" volatile"); };
+//template <typename T> struct cv_qual<T const volatile> { static constexpr auto chars = chararray(" const volatile"); };
+//
+//template <typename T> struct array_cv_qual      { static constexpr auto chars = cv_qual<T>::chars; };
+//template <typename T> struct array_cv_qual<T[]> { static constexpr auto chars = chararray("[]")
+//                                                                              + array_cv_qual<T>::chars; };
+//template <typename T,
+//            size_t N> struct array_cv_qual<T[N]>{ static constexpr auto chars = chararray("[") + i2A<N>.value() + chararray("]")
+//                                                                              + array_cv_qual<T>::chars; };
 
-template <typename T> struct cv_qual                   { static constexpr auto chars = chararray(""); };
-template <typename T> struct cv_qual<T const>          { static constexpr auto chars = chararray(" const"); };
-template <typename T> struct cv_qual<T volatile>       { static constexpr auto chars = chararray(" volatile"); };
-template <typename T> struct cv_qual<T const volatile> { static constexpr auto chars = chararray(" const volatile"); };
+// Should be able to replace the above class templates with these variable templates
 
-template <typename T> struct array_cv_qual      { static constexpr auto chars = cv_qual<T>::chars; };
-template <typename T> struct array_cv_qual<T[]> { static constexpr auto chars = chararray("[]")
-                                                                              + array_cv_qual<T>::chars; };
-template <typename T,
-            size_t N> struct array_cv_qual<T[N]>{ static constexpr auto chars = chararray("[") + i2A<N>.value() + chararray("]")
-                                                                              + array_cv_qual<T>::chars; };
 
-/* Should be able to replace the above class templates with these variable templates
-
-template <typename T> constexpr auto ref_qual      = chararray("");
-template <typename T> constexpr auto ref_qual<T&>  = chararray("&");
-template <typename T> constexpr auto ref_qual<T&&> = chararray("&&");
-
-template <typename T> constexpr auto cv_qual                   = chararray("");
-template <typename T> constexpr auto cv_qual<T const>          = chararray(" const");
-template <typename T> constexpr auto cv_qual<T volatile>       = chararray(" volatile");
-template <typename T> constexpr auto cv_qual<T const volatile> = chararray(" const volatile");
-
-template <typename T> constexpr auto array_cv_qual      = cv_qual<T>;
-template <typename T> constexpr auto array_cv_qual<T[]> = chararray("[]") + array_cv_qual<T>;
-template <typename T, size_t N> constexpr auto array_cv_qual<T[N]> = chararray("[") + i2A<N>.value() + chararray("]") + array_cv_qual<T>;
-*/
-
-template <typename T>
-const char* const& type_name<T>::base()
-{
-    return Tname<std::remove_cv_t<std::remove_reference_t<T>>>::cstr();
-}
-
-template <typename T>
-constexpr auto type_name<T>::qual()
-{
-    return array_cv_qual<std::remove_reference_t<T>>::chars + ref_qual<T>::chars;
-}
+//template <typename T>
+//const char* const& type_name<T>::base()
+//{
+//    return Tname<std::remove_cv_t<std::remove_reference_t<T>>>::cstr();
+//}
+//
+//template <typename T>
+//constexpr auto type_name<T>::qual()
+//{
+//    return array_cv_qual<std::remove_reference_t<T>>::chars + ref_qual<T>::chars;
+//}
 
 template <typename T>
 std::string type_name<T>::str()
@@ -151,7 +163,7 @@ std::string type_name<T>::str()
 }
 
 template <typename T>
-void type_info(T&& a, const std::string& decl={})
+void print_type_info(T&& a, const std::string& decl={})
 {
     std::cout << decl << " type: " << type_name<decltype(a)>{} << ", "  << a << std::endl;
 }
