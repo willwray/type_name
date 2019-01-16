@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <string>
 #include <cstring>
+#include <string>
 #include <string_view>
 #include <typeinfo>
 #include <type_traits>
@@ -88,11 +88,11 @@ template <bool Free = false>
 auto
 demangle(char const* name)
 {
-  if constexpr (! CXXABI)
+  if constexpr (not CXXABI)
     return name;           // NOP: assume already demangled if not on CXXABI
   else if constexpr (Free)
-    return std::unique_ptr<char, decltype(std::free)*>
-    { abi::__cxa_demangle(name, nullptr, nullptr, nullptr), std::free };
+    return std::unique_ptr<char, decltype(std::free)*>(
+	  abi::__cxa_demangle(name, nullptr, nullptr, nullptr), std::free );
   else
     return abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
 }
