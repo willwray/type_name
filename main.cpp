@@ -4,5 +4,5 @@
 int main()
 {
     const volatile char abc[1][2][3]{};
-    std::cout << type_name<decltype(abc)>() << std::endl;    
+	std::cout << type_name<char>{} << std::endl;
 }
