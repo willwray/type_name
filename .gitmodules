@@ -1,0 +1,4 @@
+[submodule "subprojects/subarray"]
+	path = subprojects/subarray
+	url = https://github.com/willwray/subarray.git
+	branch = preconcept
