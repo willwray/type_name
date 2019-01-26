@@ -43,9 +43,8 @@
 namespace impl
 {
 // Implementation note:
-// There's no way to test at compile-time if __PRETTY_FUNCTION__ exists,
-// as it's a static local variable, so test #ifdef __FUNCSIG__ instead,
-// as it's a preprocessor defined symbol, and #else __PRETTY_FUNCTION__.
+// There's no way to test at compile-time if __PRETTY_FUNCTION__ exists
+// so test #ifdef __FUNCSIG__ instead and #else __PRETTY_FUNCTION__.
 
 // PTTS; Preprocessor-Time Typename Size
 //
@@ -72,9 +71,8 @@ constexpr
 auto
 PTTI()
 {
-// Uses PTTS to calculate the prefix size of pretty-function output
-//                  i.e. the 'preamble' before the type name begins.
-// (To adapt to prefix change, seemingly more common than suffix change.)
+// Changes to the output prefix are more common than suffix changes,
+// so assume the suffix format is fixed and search backwards.
 
 # if defined(__FUNCSIG__)
  // FUNCSIG example on recent MSVC:
@@ -88,7 +86,7 @@ PTTI()
                                     - sizeof(     "int>(void)");
     constexpr long FS_T_suffix_size = sizeof(        ">(void)");
 
-    return ltl::subarray<FS_T_prefix_size
+    return ltl::subarray<FS_T_prefix_size,
                         -FS_T_suffix_size>(__FUNCSIG__);
 # else
 
