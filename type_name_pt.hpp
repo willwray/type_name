@@ -84,9 +84,9 @@ PTTI()
  //                          prefix           suffix
 
     // (type arg <int> is arbitrary)
-    constexpr auto FS_T_prefix_size =         PTTS<int>()
+    constexpr long FS_T_prefix_size =         PTTS<int>()
                                     - sizeof(     "int>(void)");
-    constexpr auto FS_T_suffix_size = sizeof(        ">(void)");
+    constexpr long FS_T_suffix_size = sizeof(        ">(void)");
 
     return ltl::subarray<FS_T_prefix_size
                         -FS_T_suffix_size>(__FUNCSIG__);
@@ -98,9 +98,9 @@ PTTI()
  //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ^
  //                                    prefix             suffix
 
-    constexpr auto PF_T_prefix_size =         PTTS<int>()
+    constexpr long PF_T_prefix_size =         PTTS<int>()
                                     - sizeof(     "int]");
-    constexpr auto PF_T_suffix_size = sizeof(        "]");
+    constexpr long PF_T_suffix_size = sizeof(        "]");
 
     return ltl::subarray<PF_T_prefix_size,
                         -PF_T_suffix_size>(__PRETTY_FUNCTION__);
@@ -133,16 +133,16 @@ auto
 PTvI()
 {
 # if defined(__FUNCSIG__)
-    constexpr auto FS_v_prefix_size =         PTvS<1>()
+    constexpr long FS_v_prefix_size =         PTvS<1>()
                                     - sizeof(     "1>(void)");
-    constexpr auto FS_v_suffix_size = sizeof(      ">(void)");
+    constexpr long FS_v_suffix_size = sizeof(      ">(void)");
 
     return ltl::subarray<FS_v_prefix_size,
                         -FS_v_suffix_size>(__FUNCSIG__);
 # else
-    constexpr auto PF_v_prefix_size =           PTvS<1>()
+    constexpr long PF_v_prefix_size =           PTvS<1>()
                                     - sizeof(       "1]");
-    constexpr auto PF_v_suffix_size = sizeof(        "]");
+    constexpr long PF_v_suffix_size = sizeof(        "]");
 
     return ltl::subarray<PF_v_prefix_size,
                         -PF_v_suffix_size>(__PRETTY_FUNCTION__);
