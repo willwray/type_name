@@ -48,7 +48,7 @@ constexpr bool CXXABI
    Failure is signalled by an empty return value; ""
    (indicates a demangle failure as typeid is assumed fail-safe).
    Requirements:
-       C++17 for string_view, constexpr-if and __has_include
+       C++17 for string_view, constexpr-if, CTAD (unique_ptr) and __has_include
        RTTI, the compiler's runtime type information, must be enabled
    Dependencies: <string>,<string_view>,<type_traits> for std::conditional
       <typeinfo> (RTTI)
@@ -88,13 +88,15 @@ template <bool Free = false>
 auto
 demangle(char const* name)
 {
-  if constexpr (not CXXABI)
-    return name;           // NOP: assume already demangled if not on CXXABI
-  else if constexpr (Free)
-    return std::unique_ptr<char, decltype(std::free)*>(
-	  abi::__cxa_demangle(name, nullptr, nullptr, nullptr), std::free );
-  else
-    return abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
+  if constexpr (not CXXABI) {
+      return name;         // NOP: assume already demangled if not on CXXABI
+  } else {
+    auto dmg = abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
+    if constexpr (Free)
+        return std::unique_ptr<char, decltype(std::free)*>( dmg, std::free);
+    else
+        return dmg;
+  }
 }
 
 // type_name_rt<T>()       Returns string, frees any malloc from ABI demangle
