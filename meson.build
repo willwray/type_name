@@ -10,3 +10,9 @@ foreach s : subprojects
 endforeach
 
 executable('type_name', src, dependencies : [subarray_dep])
+
+test('test type_name_pt',
+  executable('type_name_pt', 'test/type_name_pt.cpp'
+          , dependencies : [ subarray_dep]
+  )
+)
