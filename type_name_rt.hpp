@@ -86,7 +86,7 @@ namespace impl
 //
 template <bool Free = false>
 auto
-demangle(char const* name)
+demangle(char const* name) noexcept(not CXXABI)
 {
   if constexpr (not CXXABI) {
       return name;         // NOP: assume already demangled if not on CXXABI
@@ -105,27 +105,27 @@ demangle(char const* name)
 template <typename T, bool Free = true>
 auto
 type_name_rt(
-             char const* tid = typeid(IdT<T>).name()
-            )
-//  The typeid name is passed in as a (default) parameter
-//  for code generation purposes:
-//   GCC recognises that the function body is independent of T
-//       and emits one function, for all Ts, with typeid inlined.
-//   Clang doesn't appear to do this 'deduplication' yet (Clang6).
+  // The demangled typeid name is passed in as a (default) argument because
+  // then the function body is independent of the template args, T & Free.
+  // Compilers may emit one function, for all Ts, inlining typeid & demangle.
+	decltype(demangle<Free>(""))
+	   dmg = demangle<Free>(typeid(IdT<T>).name())
+)
+  noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
+	                                            std::string_view>
 {
-  using S = std::conditional_t<Free, std::string, std::string_view>;
-
-  // Calibrate the prefix for different compilers, removing "int>"
-  static const int p = std::strlen(impl::demangle<>(typeid(IdT<int>).name()))-4;
-
-  if (auto dmg = impl::demangle<Free>(tid))
+  using std::strlen;
+  // Calibrate the prefix for different compilers, remove  "int>"
+  static auto const prefix_len = strlen(demangle<>(typeid(IdT<int>).name()))
+		                       - strlen("int>");
+  if (dmg)
   {
 	std::string_view tv{ &*dmg }; // unique_ptr<char> or char*, hence &*
-	tv.remove_prefix(p);          // strip first chars "... IdT<"
+	tv.remove_prefix(prefix_len); // strip first chars "... IdT<"
 	tv.remove_suffix(1);          // strip final char          ">"
-	return S(tv);
+	return { tv };
   }
-  return S("");
+  return "";
 }
 } // namespace impl
 
@@ -141,4 +141,3 @@ template <typename T>
 inline
 std::string_view
 const type_name_rt = impl::type_name_rt<T, false>();
-
