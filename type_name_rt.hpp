@@ -128,7 +128,7 @@ noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
   if (dmg)
   {
     size_t const p = prefix_len();
-    return { &*dmg + p, std::strlen(&*dmg) - p + 1 };
+    return { &*dmg + p, std::strlen(&*dmg) - p - 1 };
   }
   return "";
 }
