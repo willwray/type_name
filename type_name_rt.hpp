@@ -115,17 +115,16 @@ size_t prefix_len()
 // type_name_rt<T,false>() Returns string_view, does not free demangle malloc
 //
 template <typename T, bool Free = true>
-  // The demangled typeid name is passed in as a (default) argument because
-  // then the function body is independent of the template args, T & Free.
+  // The typeid name is passed in as a (default) argument because
+  // then the function body is independent of the template type arg T.
   // Compilers may emit one function, for all Ts, inlining typeid & demangle.
 auto
-type_name_rt(
-     demangle_t<Free> dmg = demangle<Free>(typeid(IdT<T>).name())
-)
-noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
-                                              std::string_view>
+type_name_rt( char const* tid = typeid(IdT<T>).name() ) noexcept(!CXXABI)
+ ->
+    std::conditional_t<Free, std::string,
+                             std::string_view>
 {
-  if (dmg)
+  if (auto dmg = demangle<Free>(tid))
   {
     size_t const p = prefix_len();
     return { &*dmg + p, std::strlen(&*dmg) - p - 1 };
