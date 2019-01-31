@@ -10,12 +10,12 @@ std::ostream& operator<<(std::ostream& o, std::array<char,N> const& a)
     return o;
 }
 
-constexpr char c{};
+constexpr char static_var{};
 
 int main()
 {
-    std::cout << "AUTO_NAME &c     :  " << auto_name_pt<&c> << '\n';
-    std::cout << "AUTO_NAME char{} :  " << auto_name_pt<char{}> << '\n';
+    std::cout << "AUTO_NAME &static_var     :  " << auto_name_pt<&static_var> << '\n';
+    std::cout << "AUTO_NAME char{}          :  " << auto_name_pt<char{}> << '\n';
 
     std::cout << '\n';
 
