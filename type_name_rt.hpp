@@ -99,31 +99,33 @@ demangle(char const* name) noexcept(not CXXABI)
   }
 }
 
+template <bool Free> using demangle_t
+                = decltype(demangle<Free>(std::declval<char const*>()));
+
 // type_name_rt<T>()       Returns string, frees any malloc from ABI demangle
 // type_name_rt<T,false>() Returns string_view, does not free demangle malloc
 //
 template <typename T, bool Free = true>
-auto
-type_name_rt(
   // The demangled typeid name is passed in as a (default) argument because
   // then the function body is independent of the template args, T & Free.
   // Compilers may emit one function, for all Ts, inlining typeid & demangle.
-	decltype(demangle<Free>(""))
-	   dmg = demangle<Free>(typeid(IdT<T>).name())
+auto
+type_name_rt(
+     demangle_t<Free> dmg = demangle<Free>(typeid(IdT<T>).name())
 )
-  noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
-	                                            std::string_view>
+noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
+                                              std::string_view>
 {
   using std::strlen;
   // Calibrate the prefix for different compilers, remove  "int>"
   static auto const prefix_len = strlen(demangle<>(typeid(IdT<int>).name()))
-		                       - strlen("int>");
+                               - strlen("int>");
   if (dmg)
   {
-	std::string_view tv{ &*dmg }; // unique_ptr<char> or char*, hence &*
-	tv.remove_prefix(prefix_len); // strip first chars "... IdT<"
-	tv.remove_suffix(1);          // strip final char          ">"
-	return { tv };
+  std::string_view tv{ &*dmg }; // unique_ptr<char> or char*, hence &*
+  tv.remove_prefix(prefix_len); // strip first chars "... IdT<"
+  tv.remove_suffix(1);          // strip final char          ">"
+  return { tv };
   }
   return "";
 }
