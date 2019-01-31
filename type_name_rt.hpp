@@ -86,9 +86,9 @@ namespace impl
 //
 template <bool Free = false>
 auto
-demangle(char const* name) noexcept(not CXXABI)
+demangle(char const* name) noexcept(!CXXABI)
 {
-  if constexpr (not CXXABI) {
+  if constexpr (!CXXABI) {
       return name;         // NOP: assume already demangled if not on CXXABI
   } else {
     auto dmg = abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
@@ -99,8 +99,17 @@ demangle(char const* name) noexcept(not CXXABI)
   }
 }
 
-template <bool Free> using demangle_t
-                = decltype(demangle<Free>(std::declval<char const*>()));
+template <bool Free>
+using demangle_t = decltype(demangle<Free>(std::declval<char const*>()));
+
+// prefix_len (constant): prefix length of demangled typeid(IdT<T>)
+//   for different compilers (remove 4 chars "int>" from the length)
+size_t prefix_len()
+{
+  static size_t const len = std::strlen(demangle<>(typeid(IdT<int>).name()))
+                          - std::strlen("int>");
+  return len;
+}
 
 // type_name_rt<T>()       Returns string, frees any malloc from ABI demangle
 // type_name_rt<T,false>() Returns string_view, does not free demangle malloc
@@ -116,16 +125,10 @@ type_name_rt(
 noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
                                               std::string_view>
 {
-  using std::strlen;
-  // Calibrate the prefix for different compilers, remove  "int>"
-  static auto const prefix_len = strlen(demangle<>(typeid(IdT<int>).name()))
-                               - strlen("int>");
   if (dmg)
   {
-  std::string_view tv{ &*dmg }; // unique_ptr<char> or char*, hence &*
-  tv.remove_prefix(prefix_len); // strip first chars "... IdT<"
-  tv.remove_suffix(1);          // strip final char          ">"
-  return { tv };
+    size_t const p = prefix_len();
+    return { &*dmg + p, std::strlen(&*dmg) - p + 1 };
   }
   return "";
 }
