@@ -39,5 +39,5 @@ int main()
     std::cout << '\n';
 
     std::cout << "TYPE_NAME std::string :  _PT " << type_name_pt<std::string> << '\n';
-    std::cout << "                      :  _RT " << type_name_rt<std::string> << '\n';
+    std::cout << "                      :  _RT " << type_name_str<std::string>() << '\n';
 }
