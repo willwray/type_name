@@ -99,35 +99,43 @@ demangle(char const* name) noexcept(!CXXABI)
   }
 }
 
-template <bool Free>
-using demangle_t = decltype(demangle<Free>(std::declval<char const*>()));
-
 // prefix_len (constant): prefix length of demangled typeid(IdT<T>)
 //   for different compilers (remove 4 chars "int>" from the length)
-size_t prefix_len()
+size_t IdT_prefix_len()
 {
   static size_t const len = std::strlen(demangle<>(typeid(IdT<int>).name()))
                           - std::strlen("int>");
   return len;
 }
 
+template <typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template <typename T>
+inline constexpr bool is_cvref_v = !std::is_same_v<T,remove_cvref_t<T>>;
+
 // type_name_rt<T>()       Returns string, frees any malloc from ABI demangle
 // type_name_rt<T,false>() Returns string_view, does not free demangle malloc
 //
-template <typename T, bool Free = true>
-  // The typeid name is passed in as a (default) argument because
-  // then the function body is independent of the template type arg T.
-  // Compilers may emit one function, for all Ts, inlining typeid & demangle.
+template <typename T, bool Free = true, typename = void>
 auto
-type_name_rt( char const* tid = typeid(IdT<T>).name() ) noexcept(!CXXABI)
- ->
-    std::conditional_t<Free, std::string,
-                             std::string_view>
+type_name_rt() noexcept(!CXXABI) -> std::conditional_t<Free, std::string,
+                                                             std::string_view>
 {
-  if (auto dmg = demangle<Free>(tid))
+  if constexpr (!is_cvref_v<T>)
   {
-    size_t const p = prefix_len();
-    return { &*dmg + p, std::strlen(&*dmg) - p - 1 };
+    if (auto dmg = demangle<Free>(typeid(T).name()))
+    {
+      return { &*dmg };
+    }
+  }
+  else // wrap all cvref types for now - maybe only do functions and arrays
+  {
+    if (auto dmg = demangle<Free>(typeid(IdT<T>).name()))
+    {
+      size_t const p = IdT_prefix_len();
+      return { &*dmg + p, std::strlen(&*dmg) - p - 1 };
+    }
   }
   return "";
 }
